@@ -11,9 +11,6 @@ load_dotenv()
 
 st.set_page_config(page_title="UpThink", page_icon="💭", layout="wide")
 
-st.title("💭 UpThink")
-st.caption("지식을 정리하는 사고에만 집중할 수 있음")
-
 # API Key 설정
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 
@@ -45,11 +42,17 @@ def render_common_sidebar():
 render_common_sidebar()
 
 
+home = st.Page(
+    "home.py",
+    title="Intro",
+    icon=":material/home:",
+    default=True,
+)
+
 image_ocr = st.Page(
     "image_ocr.py",
     title="이미지 처리",
     icon=":material/upload_file:",
-    default=True,
 )
 note_summary = st.Page(
     "note_summary.py",
@@ -74,6 +77,7 @@ note_split = st.Page(
 
 pg = st.navigation(
     {
+        "홈": [home],
         "노트 정리": [
             image_ocr,
             note_summary,
