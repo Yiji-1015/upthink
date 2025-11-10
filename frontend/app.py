@@ -1,5 +1,5 @@
 """
-왼쪽 사이드바 하단에 "노트 업로드", "Vault 경로 입력" 추가해야 함
+UpThink 메인 앱
 """
 
 import os
@@ -16,6 +16,33 @@ st.caption("지식을 정리하는 사고에만 집중할 수 있음")
 
 # API Key 설정
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
+
+
+# 공통 사이드바 설정
+def render_common_sidebar():
+    """모든 페이지에서 공통으로 사용하는 사이드바"""
+    with st.sidebar:
+        # Vault 경로 입력
+        st.text_input(
+            "Vault 경로",
+            placeholder="Obsidian Vault의 경로를 입력하세요",
+            help="Obsidian Vault 디렉토리의 절대 경로를 입력하세요",
+            key="vault_path",
+        )
+
+        # 파일 업로드
+        st.file_uploader(
+            "Markdown 파일 업로드",
+            type=["md"],
+            help="처리할 마크다운 파일을 업로드하세요",
+            key="uploaded_file",
+        )
+
+        st.divider()
+
+
+# 공통 사이드바 렌더링
+render_common_sidebar()
 
 
 image_ocr = st.Page(
