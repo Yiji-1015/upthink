@@ -1,21 +1,36 @@
 import streamlit as st
-import os, sys
+import sys
+from pathlib import Path
 
-# 현재 작업 디렉토리(frontend) 기준으로 한 단계 위(upthink)로 올라가기
-ROOT_DIR = os.path.abspath(os.path.join(os.getcwd(), ".."))
-
-if ROOT_DIR not in sys.path:
-    sys.path.append(ROOT_DIR)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 from backend.related_note import Related_Note
 
+st.title("🧠 노트 임베딩 & 추천 시스템")
+
+# ───────────────────────────────────────────────
+# Vault 경로 확인 (app.py의 공통 사이드바에서 입력받음)
+# ───────────────────────────────────────────────
+vault_path = st.session_state.get("vault_path", "")
+
+if not vault_path:
+    st.warning("👈 왼쪽 사이드바에서 Vault 경로를 입력해주세요.")
+    st.stop()
+
+# 경로 유효성 검사
+vault_dir = Path(vault_path)
+if not vault_dir.exists() or not vault_dir.is_dir():
+    st.error(f"❌ 유효하지 않은 경로입니다: {vault_path}")
+    st.stop()
 
 # 엔진 초기화
-engine = Related_Note()
-
-st.set_page_config(page_title="노트 임베딩 및 추천", layout="wide")
-
-st.title("🧠 노트 임베딩 & 추천 시스템")
+try:
+    engine = Related_Note(vault_path=vault_path)
+    st.success(f"✅ Vault 연결 완료: {vault_path}")
+except Exception as e:
+    st.error(f"❌ 엔진 초기화 실패: {e}")
+    st.stop()
 
 # ───────────────────────────────────────────────
 # STEP 1. 아직 임베딩 안 된 노트 확인

@@ -20,16 +20,19 @@ class Related_Note:
     - embedded_markers.txt 로 "이미 임베딩된 파일"을 추적
     """
 
-    def __init__(self) -> None:
+    def __init__(self, vault_path: str) -> None:
         """
         - vault_path / vector_store 경로 / embedded marker 경로 설정
         - Upstage 임베딩 객체 생성
         - Chroma 벡터스토어 로드 또는 새로 생성
         - embedded_markers.txt 파일이 없으면 빈 파일 생성
         * embedded_markers는 이미 임베딩된 노트들 기록해둠으로서 추후 중복 임베딩 및 저장 피하는 용도
+
+        Args:
+            vault_path (str): Obsidian Vault 디렉토리의 절대 경로
         """
+        self.vault_path = Path(vault_path).resolve()
         base_path = Path(__file__).resolve()
-        self.vault_path = base_path.parent.parent.parent.parent
         self.embedding_path = base_path.parent
         self.store_dir = self.embedding_path / "vector_store"
         self.marker_root = self.embedding_path / "embedded_markers.txt"
@@ -319,7 +322,10 @@ class Related_Note:
 # 단독 실행용 예시
 # ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    engine = Related_Note()
+    # Vault 경로를 지정해야 합니다
+    MY_VAULT_PATH = "YOUR_VAULT_PATH_HERE"  # 예: "/Users/username/Documents/MyVault"
+
+    engine = Related_Note(vault_path=MY_VAULT_PATH)
 
     # 1) 아직 임베딩 안 된 노트들 임베딩
     engine.index_unembedded_notes()
