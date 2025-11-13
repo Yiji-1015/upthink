@@ -51,13 +51,8 @@ home = st.Page(
 
 image_ocr = st.Page(
     "image_ocr.py",
-    title="이미지 처리",
+    title="이미지 대체 텍스트 생성",
     icon=":material/upload_file:",
-)
-note_summary = st.Page(
-    "note_summary.py",
-    title="노트 요약",
-    icon=":material/summarize:",
 )
 tag_suggest = st.Page(
     "tag_suggest.py",
@@ -80,7 +75,6 @@ pg = st.navigation(
         "홈": [home],
         "노트 정리": [
             image_ocr,
-            note_summary,
             tag_suggest,
             related_note,
             note_split,
