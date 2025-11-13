@@ -36,7 +36,6 @@ created: {today}
 modified: {today}
 tags:
 {tags_yaml}
-desc:
 ---
 
 """
