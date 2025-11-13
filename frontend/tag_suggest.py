@@ -375,7 +375,7 @@ def render_final_offer(matches):
                 "existing_tags",
                 "new_tags",
                 "matches",
-                "uploaded_file",
+                # "uploaded_file",
                 "save_success_msg",
                 "save_error_msg",
             ]
@@ -451,14 +451,22 @@ def main():
     # 단계별 렌더링
     # Step 1: 기존 태그 미리보기
     if st.session_state.step == 1:
-        warning_setup = st.warning(
-            "👈ㅤ왼쪽 사이드바에서 Vault 경로와 Markdown 파일 설정을 완료해 주세요."
-        )
-        if st.session_state.get("vault_path") and st.session_state.get("uploaded_file"):
-            warning_setup.empty()
+        vault_path = st.session_state.get("vault_path")
+        uploaded_file = st.session_state.get("uploaded_file")
+
+        if vault_path and uploaded_file:
+            st.info(
+                f"- Vault 경로:ㅤ{vault_path}\n"
+                f"- Markdown 파일:ㅤ{uploaded_file.name}\n\n"
+                f"**💡 변경이 필요한 경우 왼쪽 사이드바에서 수정해 주세요.**"
+            )
             if st.button("기존 태그 분석 시작", type="primary"):
                 st.session_state.step = 2
                 st.rerun()
+        else:
+            st.warning(
+                "👈ㅤ왼쪽 사이드바에서 Vault 경로와 Markdown 파일 설정을 완료해 주세요."
+            )
 
     # Step 2-3: 기존 태그 미리보기 + 태그 작성 가이드라인 + 태그 비교 결과
     if st.session_state.step >= 2 and st.session_state.step < 4:
