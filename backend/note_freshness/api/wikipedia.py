@@ -69,7 +69,9 @@ class WikipediaClient:
         except wikipedia.exceptions.DisambiguationError as e:
             print(f"모호성: '{keyword}' - 여러 문서가 검색됨. 옵션: {e.options[:3]}")
             result["wiki_exists"] = True
+            result["title"] = keyword
             result["summary"] = f"모호성 해소 필요: 다음 중 하나를 선택해야 합니다: {e.options[:3]}"
+            result["url"] = f"https://{self.language}.wikipedia.org/wiki/{keyword.replace(' ', '_')}"
             return result
         except Exception as e:
             print(f"Wikipedia API 오류 발생: {e}")
