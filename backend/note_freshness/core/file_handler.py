@@ -121,7 +121,10 @@ class FileHandler:
 
                 # Reconstruct content with updated YAML
                 new_yaml = yaml.dump(
-                    yaml_content, allow_unicode=True, default_flow_style=False
+                    yaml_content,
+                    allow_unicode=True,
+                    default_flow_style=False,
+                    sort_keys=False,
                 )
                 new_content = f"---\n{new_yaml}---{content[yaml_match.end():]}"
             else:
@@ -137,7 +140,10 @@ class FileHandler:
                     yaml_content["tavily_searched_at"] = tavily_searched_at
 
                 new_yaml = yaml.dump(
-                    yaml_content, allow_unicode=True, default_flow_style=False
+                    yaml_content,
+                    allow_unicode=True,
+                    default_flow_style=False,
+                    sort_keys=False,
                 )
                 new_content = f"---\n{new_yaml}---\n\n{content}"
 
