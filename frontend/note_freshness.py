@@ -38,14 +38,12 @@ DEFAULT_EXTRACTION_SCHEMA = """{
   "type": "object",
   "properties": {
     "info_keyword": {
-      "type": "array",
-      "items": {"type": "string"},
-      "description": "Wikipedia 검색에 사용할 핵심 개념 키워드 목록 (3-5개). 문서의 주요 주제, 기술, 개념을 대표하는 단어를 추출합니다."
+      "type": "string",
+      "description": "The most important keyword derived from the document. The keyword must be something that exists as a Wikipedia article."
     },
     "info_query": {
-      "type": "array",
-      "items": {"type": "string"},
-      "description": "Tavily 웹 검색에 사용할 구체적인 검색 쿼리 목록 (3-5개). 최신 정보, 업데이트, 변경사항을 확인하기 위한 검색어를 작성합니다."
+      "type": "string",
+      "description": "A Korean search query that should be used with an Internet search API to retrieve the 'most up-to-date' information related to this document. Do not use Year or Month"
     }
   },
   "required": ["info_keyword", "info_query"]
@@ -223,10 +221,10 @@ def handle_search():
     # Wikipedia search
     if keywords:
         with st.spinner("Wikipedia 검색 중..."):
-            wiki_client = WikipediaClient(language="en")
+            wiki_client = WikipediaClient(language="ko")
             for keyword in keywords:
                 result = wiki_client.search_and_get_summary(keyword)
-                if result:
+                if result and result.get('wiki_exists', False):
                     wiki_results.append(result)
 
             # Save wiki results

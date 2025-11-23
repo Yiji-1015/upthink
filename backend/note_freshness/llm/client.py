@@ -2,10 +2,10 @@
 import base64
 import json
 import httpx
+from openai import OpenAI
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 from ..config import Config
-from ..models import DescriptionTemplate
 
 
 class UpstageClient:
@@ -29,6 +29,11 @@ class UpstageClient:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+
+    def _encode_file_to_base64(self, file_path: Path) -> str:
+        """Encode file to base64 string."""
+        with open(file_path, 'rb') as f:
+            return base64.b64encode(f.read()).decode('utf-8')
 
     def make_request_sync(
         self,
@@ -68,69 +73,65 @@ class UpstageClient:
     def extract_information(
         self,
         document_path: Path,
-        description: str
+        schema: str
     ) -> Optional[Dict[str, Any]]:
         """Extract information from a document using Upstage Information Extraction API.
 
         Args:
             document_path: Path to the document file (docx)
-            description: Description of what to extract with response format
+            schema: JSON schema string defining what to extract
 
         Returns:
             Extracted information as dictionary or None on error
         """
         try:
-            # Read and encode document
-            with open(document_path, 'rb') as f:
-                document_data = base64.standard_b64encode(f.read()).decode('utf-8')
+            # Encode document to base64
+            base64_data = self._encode_file_to_base64(document_path)
 
-            url = Config.UPSTAGE_IE_API_BASE
+            # Create OpenAI client for Information Extraction
+            client = OpenAI(
+                api_key=self.api_key,
+                base_url="https://api.upstage.ai/v1/information-extraction"
+            )
 
-            # Prepare multipart form data
-            files = {
-                'document': ('document.docx', open(document_path, 'rb'), 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            }
-            data = {
-                'model': 'information-extract',
-                'schema': description
-            }
+            # Parse schema string to dict
+            try:
+                schema_dict = json.loads(schema)
+            except json.JSONDecodeError:
+                print("Error: Invalid JSON schema")
+                return None
 
-            headers = {
-                "Authorization": f"Bearer {self.api_key}"
-            }
+            # Make extraction request
+            extraction_response = client.chat.completions.create(
+                model="information-extract",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:application/octet-stream;base64,{base64_data}"}
+                            }
+                        ]
+                    }
+                ],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "document_schema",
+                        "schema": schema_dict
+                    }
+                }
+            )
 
-            with httpx.Client(timeout=Config.HTTP_TIMEOUT_SYNC) as client:
-                response = client.post(
-                    url,
-                    headers=headers,
-                    files=files,
-                    data=data
-                )
-                response.raise_for_status()
-                result = response.json()
+            # Parse result
+            json_str = extraction_response.choices[0].message.content
+            result = json.loads(json_str)
+            return result
 
-                # Parse the extraction result
-                if 'extraction' in result:
-                    return result['extraction']
-                elif 'choices' in result and result['choices']:
-                    content = result['choices'][0].get('message', {}).get('content', '')
-                    try:
-                        return json.loads(content)
-                    except json.JSONDecodeError:
-                        return {'raw': content}
-                return result
-
-        except httpx.HTTPStatusError as e:
-            print(f"HTTP error during information extraction: {e}")
-            print(f"Response: {e.response.text if hasattr(e, 'response') else 'N/A'}")
-            return None
         except Exception as e:
             print(f"Error during information extraction: {e}")
             return None
-        finally:
-            # Close the file if it was opened
-            if 'files' in locals() and files.get('document'):
-                files['document'][1].close()
 
     def generate_freshness_guide(
         self,
