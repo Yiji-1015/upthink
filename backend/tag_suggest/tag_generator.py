@@ -187,11 +187,10 @@ if __name__ == "__main__":
 
     # 테스트용 체크리스트
     checklist: ChecklistType = {
-        "language": "en",  # "mixed"
+        "language": "en",
         "case_style": "lowercase",
         "separator": "hyphen",
         "tag_count_range": {"min": 3, "max": 5},
-        # "specificity": "balanced",
     }
 
     # 가이드라인 생성기 초기화

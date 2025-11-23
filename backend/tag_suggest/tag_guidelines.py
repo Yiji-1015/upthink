@@ -17,11 +17,10 @@ from typing import Dict, Any, TypedDict
 class ChecklistType(TypedDict, total=False):
     """태그 작성 패턴 체크리스트 타입"""
 
-    language: str  # ko, en, mixed
+    language: str  # ko, en
     case_style: str  # lowercase, uppercase (영어 사용 시)
     separator: str  # hyphen, underscore
     tag_count_range: Dict[str, int]  # min, max
-    # specificity: str  # general, specific, balanced
 
 
 class GuidelineGenerator:
@@ -37,7 +36,6 @@ class GuidelineGenerator:
             "language",
             "separator",
             "tag_count_range",
-            # "specificity",
         ]
 
         for field in required_fields:
@@ -45,7 +43,7 @@ class GuidelineGenerator:
                 raise ValueError(f"필수 항목이 누락되었습니다: {field}")
 
         # 영어 사용 시 case_style 필수
-        if self.checklist["language"] in ["en"]:  # "mixed"
+        if self.checklist["language"] in ["en"]:
             if "case_style" not in self.checklist:
                 raise ValueError("영어 사용 시 대소문자 설정은 필수입니다")
 
@@ -83,7 +81,7 @@ class GuidelineGenerator:
         guideline_parts.append(self._generate_language_rule())
 
         # 영어 사용 시 대소문자 규칙
-        if self.checklist["language"] in ["en"]:  # "mixed"
+        if self.checklist["language"] in ["en"]:
             guideline_parts.append(self._generate_case_rule())
 
         # 단어의 구분이 필요할 경우
@@ -91,9 +89,6 @@ class GuidelineGenerator:
 
         # 선호하는 태그 개수
         guideline_parts.append(self._generate_count_rule())
-
-        # 태그의 구체성
-        # guideline_parts.append(self._generate_specificity_rule())
 
         # Output 형식
         guideline_parts.append(self._generate_output_format())
@@ -107,7 +102,6 @@ class GuidelineGenerator:
         language_map = {
             "ko": "**한국어**만 사용하세요.",
             "en": "**영어**만 사용하세요.",
-            # "mixed": "**한국어와 영어를 혼용**할 수 있습니다.",
         }
 
         rule = language_map[language]
@@ -151,20 +145,6 @@ class GuidelineGenerator:
             f"- 이 규칙을 위반하면 응답이 거부됩니다.\n"
         )
 
-    # 태그 구체성 기능
-    # def _generate_specificity_rule(self) -> str:
-    #     """구체성 규칙 생성"""
-    #     specificity = self.checklist["specificity"]
-    #
-    #     specificity_map = {
-    #         "general": "**간단한 단일 단어**로 구성된 태그를 생성하세요.",
-    #         "specific": "**여러 단어로 구성된 상세한 의미**를 담은 태그를 생성하세요.",
-    #         "balanced": "**간단한 단일 단어의 태그와 여러 단어가 구성된 상세한 의미의 태그를 함께** 생성하세요.",
-    #     }
-    #
-    #     rule = specificity_map[specificity]
-    #     return f"## 태그의 구체성\n{rule}\n"
-
     def _generate_output_format(self) -> str:
         """Output 형식 규칙 생성"""
         return (
@@ -187,7 +167,6 @@ class GuidelineGenerator:
             "대소문자": self.checklist.get("case_style", "N/A"),
             "구분자": self.checklist["separator"],
             "태그 개수": f"{self.checklist['tag_count_range']['min']}-{self.checklist['tag_count_range']['max']}개",
-            # "구체성": self.checklist["specificity"],
         }
 
         return summary
@@ -199,7 +178,6 @@ if __name__ == "__main__":
         "case_style": "lowercase",
         "separator": "hyphen",
         "tag_count_range": {"min": 3, "max": 5},
-        # "specificity": "specific",
     }
 
     guidelines_generator = GuidelineGenerator(test_checklist)

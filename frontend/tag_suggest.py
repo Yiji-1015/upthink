@@ -45,34 +45,13 @@ def init_session_state():
         st.session_state.step = 1
 
 
-# def render_sidebar():
-#     """사이드바 렌더링 - 진행 단계 표시"""
-#     with st.sidebar:
-#         # 진행 단계 표시
-#         st.subheader("📊 진행 단계")
-#         steps = [
-#             "1️⃣ 설정 입력",
-#             "2️⃣ 체크리스트 작성",
-#             "3️⃣ 태그 생성",
-#             "4️⃣ 결과 확인",
-#         ]
-
-#         for i, step_name in enumerate(steps, 1):
-#             if i < st.session_state.step:
-#                 st.success(f"✓ {step_name}")
-#             elif i == st.session_state.step:
-#                 st.info(f"▶ {step_name}")
-#             else:
-#                 st.text(step_name)
-
-
 def render_existing_tags_preview():
     """기존 태그 수집 결과"""
     vault_path_str = st.session_state.get("vault_path", "")
     if not vault_path_str:
         return
 
-    vault_path = Path(vault_path_str)
+    vault_path = Path(vault_path_str.strip())
     if not vault_path.exists():
         st.warning(f"⚠️ Vault 경로를 찾을 수 없습니다: {vault_path_str}")
         return
@@ -130,11 +109,10 @@ def render_checklist_form():
             st.markdown("**1/ 주로 사용하는 언어**")
             language = st.radio(
                 "언어",
-                options=["en", "ko"],  # "mixed"
+                options=["en", "ko"],
                 format_func=lambda x: {
                     "en": "영어만",
                     "ko": "한국어만",
-                    # "mixed": "한국어 + 영어 혼용",
                 }[x],
                 label_visibility="collapsed",
                 key="language_radio",
@@ -144,7 +122,7 @@ def render_checklist_form():
         with col_case:
             st.markdown("**2/ 영어 대소문자 규칙**")
             case_style = None
-            if language in ["en"]:  # "mixed"
+            if language in ["en"]:
                 case_style = st.radio(
                     "대소문자",
                     options=["lowercase", "uppercase"],
@@ -202,18 +180,6 @@ def render_checklist_form():
                 time.sleep(1)
                 warning_max.empty()
 
-        # 구체성
-        # st.markdown("**5/ 태그의 구체성**")
-        # specificity = st.radio(
-        #     "태그의 구체성",
-        #     options=["general", "specific"],
-        #     format_func=lambda x: {
-        #         "general": "일반 (e.g., `AI`, `개발`)",
-        #         "specific": "구체적 (e.g., `machine-learning-optimization`)",
-        #     }[x],
-        #     label_visibility="collapsed",
-        #     key="specificity_radio",
-        # )
 
         # 체크리스트 생성 (버튼 클릭 -> 과정 실행)
         _, guide_ok = st.columns(2)
@@ -241,7 +207,6 @@ def render_checklist_form():
                     "language": language,
                     "separator": separator,
                     "tag_count_range": {"min": int(min_count), "max": int(max_count)},
-                    # "specificity": specificity,
                 }
 
                 if case_style:
@@ -375,7 +340,6 @@ def render_final_offer(matches):
                 "existing_tags",
                 "new_tags",
                 "matches",
-                # "uploaded_file",
                 "save_success_msg",
                 "save_error_msg",
             ]

@@ -256,11 +256,10 @@ if __name__ == "__main__":
 
         # 체크리스트 설정
         checklist: ChecklistType = {
-            "language": "en",  # "mixed"
+            "language": "en",
             "case_style": "lowercase",
             "separator": "hyphen",
             "tag_count_range": {"min": 2, "max": 3},
-            # "specificity": "balanced",
         }
 
         # 가이드라인 생성기 초기화
