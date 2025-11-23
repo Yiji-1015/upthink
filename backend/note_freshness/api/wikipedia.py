@@ -1,4 +1,5 @@
 """Wikipedia API client for searching and retrieving articles."""
+
 import wikipedia
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -31,7 +32,7 @@ class WikipediaClient:
             "title": "",
             "summary": "Wikipedia에서 해당 키워드에 대한 문서 요약 정보를 찾지 못함",
             "url": "",
-            "searched_at": datetime.now().isoformat()
+            "searched_at": datetime.now().isoformat(),
         }
 
         try:
@@ -45,7 +46,9 @@ class WikipediaClient:
             page_title = page_titles[0]
 
             # Get page summary
-            page_summary = wikipedia.summary(page_title, sentences=3, auto_suggest=False)
+            page_summary = wikipedia.summary(
+                page_title, sentences=3, auto_suggest=False
+            )
 
             # Get page for URL
             try:
@@ -70,8 +73,12 @@ class WikipediaClient:
             print(f"모호성: '{keyword}' - 여러 문서가 검색됨. 옵션: {e.options[:3]}")
             result["wiki_exists"] = True
             result["title"] = keyword
-            result["summary"] = f"모호성 해소 필요: 다음 중 하나를 선택해야 합니다: {e.options[:3]}"
-            result["url"] = f"https://{self.language}.wikipedia.org/wiki/{keyword.replace(' ', '_')}"
+            result["summary"] = (
+                f"모호성 해소 필요: 다음 중 하나를 선택해야 합니다: {e.options[:3]}"
+            )
+            result["url"] = (
+                f"https://{self.language}.wikipedia.org/wiki/{keyword.replace(' ', '_')}"
+            )
             return result
         except Exception as e:
             print(f"Wikipedia API 오류 발생: {e}")

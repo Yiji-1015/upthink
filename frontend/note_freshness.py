@@ -1,4 +1,5 @@
 """Main Streamlit application for Note Freshness Check."""
+
 import streamlit as st
 import sys
 import tempfile
@@ -11,7 +12,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Define prompts directory
-PROMPTS_DIR = project_root / 'prompts'
+PROMPTS_DIR = project_root / "prompts"
 
 from backend.note_freshness.config import Config
 from backend.note_freshness.core.state_manager import StateManager
@@ -30,7 +31,7 @@ from backend.note_freshness.ui.components import (
     render_guide_preview,
     render_error,
     render_success,
-    render_info
+    render_info,
 )
 
 
@@ -53,7 +54,9 @@ def ensure_pandoc_installed() -> bool:
             return True
         except Exception as e:
             st.error(f"⚠️ Pandoc 다운로드에 실패했습니다: {str(e)}")
-            st.info("수동으로 Pandoc을 설치해주세요: https://pandoc.org/installing.html")
+            st.info(
+                "수동으로 Pandoc을 설치해주세요: https://pandoc.org/installing.html"
+            )
             return False
 
 
@@ -68,7 +71,9 @@ def initialize_app():
 def validate_api_key() -> bool:
     """Validate that API key is configured."""
     if not Config.validate():
-        st.error("⚠️ Upstage API key not found. Please set UPSTAGE_API_KEY in your .env file.")
+        st.error(
+            "⚠️ Upstage API key not found. Please set UPSTAGE_API_KEY in your .env file."
+        )
         return False
     return True
 
@@ -76,7 +81,7 @@ def validate_api_key() -> bool:
 def get_default_schema() -> str:
     """Load default extraction schema from file."""
     loader = PromptLoader(prompts_dir=PROMPTS_DIR)
-    schema = loader.load_schema('info_extract_schema')
+    schema = loader.load_schema("info_extract_schema")
     if schema:
         return schema
     # Fallback default
@@ -104,7 +109,7 @@ def handle_note_validation(note_path: str, save_folder: str):
         render_error(f"파일을 찾을 수 없습니다: {note_path}")
         return
 
-    if not path.suffix == '.md':
+    if not path.suffix == ".md":
         render_error("마크다운 (.md) 파일을 입력해주세요.")
         return
 
@@ -155,14 +160,10 @@ def handle_extraction(schema_content: str):
     with st.spinner("노트에서 키워드와 쿼리를 추출 중..."):
         try:
             # Convert markdown to docx using pypandoc
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp_file:
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_file:
                 tmp_path = Path(tmp_file.name)
 
-            pypandoc.convert_file(
-                str(note_path),
-                'docx',
-                outputfile=str(tmp_path)
-            )
+            pypandoc.convert_file(str(note_path), "docx", outputfile=str(tmp_path))
 
             # Call Upstage Information Extraction API
             client = UpstageClient()
@@ -179,7 +180,9 @@ def handle_extraction(schema_content: str):
             info_keyword, info_query = ResponseParser.parse_extraction_result(result)
 
             if not info_keyword and not info_query:
-                render_error("키워드와 쿼리를 추출하지 못했습니다. 템플릿을 확인해주세요.")
+                render_error(
+                    "키워드와 쿼리를 추출하지 못했습니다. 템플릿을 확인해주세요."
+                )
                 return
 
             # Save to state
@@ -187,7 +190,9 @@ def handle_extraction(schema_content: str):
             StateManager.set_info_query(info_query)
             StateManager.set_step(StateManager.STEP_EXTRACTION_DONE)
 
-            render_success(f"추출 완료: {len(info_keyword)}개 키워드, {len(info_query)}개 쿼리")
+            render_success(
+                f"추출 완료: {len(info_keyword)}개 키워드, {len(info_query)}개 쿼리"
+            )
             st.rerun()
 
         except Exception as e:
@@ -200,9 +205,7 @@ def handle_metadata_confirmation(keywords: list, queries: list):
 
     # Update note with metadata
     success = FileHandler.update_note_metadata(
-        note_path,
-        info_keyword=keywords,
-        info_query=queries
+        note_path, info_keyword=keywords, info_query=queries
     )
 
     if success:
@@ -231,9 +234,11 @@ def handle_search():
             wiki_client = WikipediaClient(language="ko")
             for keyword in keywords:
                 result = wiki_client.search_and_get_summary(keyword)
-                if result and result.get('wiki_exists', False):
+                if result and result.get("wiki_exists", False):
                     wiki_results.append(result)
-                    print(f"Wikipedia 결과: {keyword} -> wiki_exists={result.get('wiki_exists')}")
+                    print(
+                        f"Wikipedia 결과: {keyword} -> wiki_exists={result.get('wiki_exists')}"
+                    )
 
             # Save wiki results
             if wiki_results:
@@ -247,7 +252,11 @@ def handle_search():
                 FileHandler.save_search_result(save_folder, "wiki_search", wiki_content)
 
                 # Update note with search timestamp
-                timestamp = wiki_results[0]['searched_at'] if wiki_results else FileHandler.get_current_timestamp()
+                timestamp = (
+                    wiki_results[0]["searched_at"]
+                    if wiki_results
+                    else FileHandler.get_current_timestamp()
+                )
                 FileHandler.update_note_metadata(note_path, wiki_searched_at=timestamp)
 
     # Tavily search
@@ -265,17 +274,25 @@ def handle_search():
                     tavily_content = "# Tavily 검색 결과\n\n"
                     for r in tavily_results:
                         tavily_content += f"## 쿼리: {r['query']}\n\n"
-                        for item in r['results']:
+                        for item in r["results"]:
                             tavily_content += f"### {item['title']}\n\n"
                             tavily_content += f"{item['content']}\n\n"
                             tavily_content += f"[원본 링크]({item['url']})\n\n"
                         tavily_content += "---\n\n"
 
-                    FileHandler.save_search_result(save_folder, "tavily_search", tavily_content)
+                    FileHandler.save_search_result(
+                        save_folder, "tavily_search", tavily_content
+                    )
 
                     # Update note with search timestamp
-                    timestamp = tavily_results[0]['searched_at'] if tavily_results else FileHandler.get_current_timestamp()
-                    FileHandler.update_note_metadata(note_path, tavily_searched_at=timestamp)
+                    timestamp = (
+                        tavily_results[0]["searched_at"]
+                        if tavily_results
+                        else FileHandler.get_current_timestamp()
+                    )
+                    FileHandler.update_note_metadata(
+                        note_path, tavily_searched_at=timestamp
+                    )
             except ValueError as e:
                 render_info(f"Tavily 검색을 건너뜁니다: {str(e)}")
     elif queries:
@@ -309,18 +326,20 @@ def handle_guide_generation():
             full_guide += "## Wikipedia 기반 검토\n\n"
 
             # Load wiki template
-            wiki_template = loader.load_template('ck_recentness_wiki')
+            wiki_template = loader.load_template("ck_recentness_wiki")
 
             for result in wiki_results:
                 if wiki_template:
                     user_vars = {
-                        'keyword': result['keyword'],
-                        'wiki_title': result['title'],
-                        'wiki_summary': result['summary'],
-                        'note_content': note_content[:3000]
+                        "keyword": result["keyword"],
+                        "wiki_title": result["title"],
+                        "wiki_summary": result["summary"],
+                        "note_content": note_content[:3000],
                     }
                     user_prompt = wiki_template.format_user_prompt(**user_vars)
-                    guide = client.generate_freshness_guide(wiki_template.system_prompt, user_prompt)
+                    guide = client.generate_freshness_guide(
+                        wiki_template.system_prompt, user_prompt
+                    )
                 else:
                     # Fallback if template not found
                     guide = None
@@ -334,21 +353,23 @@ def handle_guide_generation():
             full_guide += "## 웹 검색 기반 검토\n\n"
 
             # Load tavily template
-            tavily_template = loader.load_template('ck_recentness_tavily')
+            tavily_template = loader.load_template("ck_recentness_tavily")
 
             for result in tavily_results:
                 search_results_text = ""
-                for item in result['results']:
+                for item in result["results"]:
                     search_results_text += f"### {item['title']}\n{item['content']}\n\n"
 
                 if tavily_template:
                     user_vars = {
-                        'query': result['query'],
-                        'search_results': search_results_text,
-                        'note_content': note_content[:3000]
+                        "query": result["query"],
+                        "search_results": search_results_text,
+                        "note_content": note_content[:3000],
                     }
                     user_prompt = tavily_template.format_user_prompt(**user_vars)
-                    guide = client.generate_freshness_guide(tavily_template.system_prompt, user_prompt)
+                    guide = client.generate_freshness_guide(
+                        tavily_template.system_prompt, user_prompt
+                    )
                 else:
                     guide = None
 
@@ -360,12 +381,14 @@ def handle_guide_generation():
 
     # Generate summary
     with st.spinner("요약 생성 중..."):
-        summary_template = loader.load_template('ck_recentness_summary')
+        summary_template = loader.load_template("ck_recentness_summary")
 
         if summary_template:
-            user_vars = {'full_guide': full_guide[:2000]}
+            user_vars = {"full_guide": full_guide[:2000]}
             summary_prompt = summary_template.format_user_prompt(**user_vars)
-            summary = client.generate_freshness_guide(summary_template.system_prompt, summary_prompt)
+            summary = client.generate_freshness_guide(
+                summary_template.system_prompt, summary_prompt
+            )
         else:
             summary = None
 
@@ -439,7 +462,9 @@ def main():
         keywords = StateManager.get_info_keyword()
         queries = StateManager.get_info_query()
 
-        edited_keywords, edited_queries = render_metadata_review_section(keywords, queries)
+        edited_keywords, edited_queries = render_metadata_review_section(
+            keywords, queries
+        )
 
         if st.button("최신성 메타데이터 확정", type="primary"):
             handle_metadata_confirmation(edited_keywords, edited_queries)
@@ -478,7 +503,9 @@ def main():
         save_folder = StateManager.get_save_folder_path()
         note_path = StateManager.get_raw_note_path()
 
-        save_folder_display = format_path_for_display(save_folder, prefer_windows_format=True)
+        save_folder_display = format_path_for_display(
+            save_folder, prefer_windows_format=True
+        )
         note_display = format_path_for_display(note_path, prefer_windows_format=True)
 
         st.markdown(f"**검색 결과 저장 위치:** `{save_folder_display}`")

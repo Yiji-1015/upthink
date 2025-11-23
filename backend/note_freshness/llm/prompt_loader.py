@@ -1,4 +1,5 @@
 """Prompt template loading functionality for note freshness."""
+
 import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -32,7 +33,7 @@ class PromptLoader:
             return None
 
         try:
-            with open(template_path, 'r', encoding='utf-8') as f:
+            with open(template_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             if data is None:
@@ -44,10 +45,10 @@ class PromptLoader:
                 return None
 
             return PromptTemplate(
-                name=data.get('name', template_name),
-                description=data.get('description', ''),
-                system_prompt=data.get('system_prompt', ''),
-                user_prompt_template=data.get('user_prompt_template', '')
+                name=data.get("name", template_name),
+                description=data.get("description", ""),
+                system_prompt=data.get("system_prompt", ""),
+                user_prompt_template=data.get("user_prompt_template", ""),
             )
         except yaml.YAMLError as e:
             print(f"Error parsing YAML in template {template_name}: {e}")
@@ -71,13 +72,13 @@ class PromptLoader:
             return None
 
         try:
-            with open(schema_path, 'r', encoding='utf-8') as f:
+            with open(schema_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
-            if data is None or 'schema' not in data:
+            if data is None or "schema" not in data:
                 return None
 
-            return data['schema'].strip()
+            return data["schema"].strip()
         except Exception as e:
             print(f"Error loading schema {schema_name}: {e}")
             return None
@@ -87,4 +88,4 @@ class PromptLoader:
         if not self.prompts_dir.exists():
             return []
 
-        return [p.stem for p in self.prompts_dir.glob('*.yml')]
+        return [p.stem for p in self.prompts_dir.glob("*.yml")]

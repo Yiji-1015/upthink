@@ -1,4 +1,5 @@
 """Tavily Search API client."""
+
 import httpx
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -26,7 +27,7 @@ class TavilyClient:
         search_depth: str = "basic",
         max_results: int = 5,
         include_answer: bool = False,
-        include_raw_content: bool = False
+        include_raw_content: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Search using Tavily API.
 
@@ -46,7 +47,7 @@ class TavilyClient:
             "search_depth": search_depth,
             "max_results": max_results,
             "include_answer": include_answer,
-            "include_raw_content": include_raw_content
+            "include_raw_content": include_raw_content,
         }
 
         try:
@@ -59,7 +60,7 @@ class TavilyClient:
                     "query": query,
                     "results": data.get("results", []),
                     "answer": data.get("answer", ""),
-                    "searched_at": datetime.now().isoformat()
+                    "searched_at": datetime.now().isoformat(),
                 }
         except httpx.HTTPStatusError as e:
             print(f"HTTP error during Tavily search: {e}")
@@ -68,7 +69,9 @@ class TavilyClient:
             print(f"Error during Tavily search: {e}")
             return None
 
-    def search_and_parse(self, query: str, max_results: int = 3) -> Optional[Dict[str, Any]]:
+    def search_and_parse(
+        self, query: str, max_results: int = 3
+    ) -> Optional[Dict[str, Any]]:
         """Search and parse results for freshness check.
 
         Args:
@@ -85,16 +88,18 @@ class TavilyClient:
         # Parse and limit results
         parsed_results = []
         for item in result.get("results", [])[:max_results]:
-            parsed_results.append({
-                "title": item.get("title", ""),
-                "url": item.get("url", ""),
-                "content": item.get("content", ""),
-                "score": item.get("score", 0),
-                "published_date": item.get("published_date", "")
-            })
+            parsed_results.append(
+                {
+                    "title": item.get("title", ""),
+                    "url": item.get("url", ""),
+                    "content": item.get("content", ""),
+                    "score": item.get("score", 0),
+                    "published_date": item.get("published_date", ""),
+                }
+            )
 
         return {
             "query": query,
             "results": parsed_results,
-            "searched_at": result["searched_at"]
+            "searched_at": result["searched_at"],
         }

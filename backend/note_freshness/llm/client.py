@@ -1,4 +1,5 @@
 """LLM client for Upstage API interaction including Information Extraction."""
+
 import base64
 import json
 import httpx
@@ -15,7 +16,7 @@ class UpstageClient:
         self,
         api_key: Optional[str] = None,
         api_base: Optional[str] = None,
-        model: Optional[str] = None
+        model: Optional[str] = None,
     ):
         self.api_key = api_key or Config.UPSTAGE_API_KEY
         self.api_base = api_base or Config.UPSTAGE_API_BASE
@@ -27,19 +28,19 @@ class UpstageClient:
     def _get_headers(self) -> Dict[str, str]:
         return {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
     def _encode_file_to_base64(self, file_path: Path) -> str:
         """Encode file to base64 string."""
-        with open(file_path, 'rb') as f:
-            return base64.b64encode(f.read()).decode('utf-8')
+        with open(file_path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
 
     def make_request_sync(
         self,
         messages: List[Dict[str, str]],
         temperature: float = None,
-        max_tokens: int = None
+        max_tokens: int = None,
     ) -> Optional[str]:
         """Make a synchronous request to the Upstage API."""
         temperature = temperature or Config.DEFAULT_TEMPERATURE
@@ -50,19 +51,15 @@ class UpstageClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens,
         }
 
         try:
             with httpx.Client(timeout=Config.HTTP_TIMEOUT_SYNC) as client:
-                response = client.post(
-                    url,
-                    headers=self._get_headers(),
-                    json=payload
-                )
+                response = client.post(url, headers=self._get_headers(), json=payload)
                 response.raise_for_status()
                 data = response.json()
-                return data['choices'][0]['message']['content']
+                return data["choices"][0]["message"]["content"]
         except httpx.HTTPStatusError as e:
             print(f"HTTP error occurred: {e}")
             return None
@@ -71,9 +68,7 @@ class UpstageClient:
             return None
 
     def extract_information(
-        self,
-        document_path: Path,
-        schema: str
+        self, document_path: Path, schema: str
     ) -> Optional[Dict[str, Any]]:
         """Extract information from a document using Upstage Information Extraction API.
 
@@ -91,7 +86,7 @@ class UpstageClient:
             # Create OpenAI client for Information Extraction
             client = OpenAI(
                 api_key=self.api_key,
-                base_url="https://api.upstage.ai/v1/information-extraction"
+                base_url="https://api.upstage.ai/v1/information-extraction",
             )
 
             # Parse schema string to dict
@@ -110,18 +105,17 @@ class UpstageClient:
                         "content": [
                             {
                                 "type": "image_url",
-                                "image_url": {"url": f"data:application/octet-stream;base64,{base64_data}"}
+                                "image_url": {
+                                    "url": f"data:application/octet-stream;base64,{base64_data}"
+                                },
                             }
-                        ]
+                        ],
                     }
                 ],
                 response_format={
                     "type": "json_schema",
-                    "json_schema": {
-                        "name": "document_schema",
-                        "schema": schema_dict
-                    }
-                }
+                    "json_schema": {"name": "document_schema", "schema": schema_dict},
+                },
             )
 
             # Parse result
@@ -134,10 +128,7 @@ class UpstageClient:
             return None
 
     def generate_freshness_guide(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        temperature: float = 0.3
+        self, system_prompt: str, user_prompt: str, temperature: float = 0.3
     ) -> Optional[str]:
         """Generate freshness guide using Solar model.
 
@@ -151,6 +142,6 @@ class UpstageClient:
         """
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
+            {"role": "user", "content": user_prompt},
         ]
         return self.make_request_sync(messages, temperature=temperature)

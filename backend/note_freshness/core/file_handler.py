@@ -1,4 +1,5 @@
 """File handling operations for note freshness."""
+
 import re
 import yaml
 from pathlib import Path
@@ -16,7 +17,9 @@ class FileHandler:
         return resolve_path(path)
 
     @staticmethod
-    def read_note(note_path: Union[str, Path]) -> Tuple[Optional[str], Optional[FreshnessMetadata]]:
+    def read_note(
+        note_path: Union[str, Path],
+    ) -> Tuple[Optional[str], Optional[FreshnessMetadata]]:
         """Read a markdown note file and extract metadata.
 
         Args:
@@ -27,7 +30,7 @@ class FileHandler:
         """
         try:
             resolved_path = FileHandler._resolve_path(note_path)
-            with open(resolved_path, 'r', encoding='utf-8') as f:
+            with open(resolved_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Extract YAML front matter
@@ -46,26 +49,26 @@ class FileHandler:
         metadata = FreshnessMetadata()
 
         # Match YAML front matter
-        yaml_match = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+        yaml_match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
         if yaml_match:
             try:
                 yaml_content = yaml.safe_load(yaml_match.group(1))
                 if yaml_content:
                     # Extract info_keyword
-                    info_keyword = yaml_content.get('info_keyword', [])
+                    info_keyword = yaml_content.get("info_keyword", [])
                     if isinstance(info_keyword, str):
                         info_keyword = [info_keyword]
                     metadata.info_keyword = info_keyword
 
                     # Extract info_query
-                    info_query = yaml_content.get('info_query', [])
+                    info_query = yaml_content.get("info_query", [])
                     if isinstance(info_query, str):
                         info_query = [info_query]
                     metadata.info_query = info_query
 
                     # Extract search timestamps
-                    metadata.wiki_searched_at = yaml_content.get('wiki_searched_at')
-                    metadata.tavily_searched_at = yaml_content.get('tavily_searched_at')
+                    metadata.wiki_searched_at = yaml_content.get("wiki_searched_at")
+                    metadata.tavily_searched_at = yaml_content.get("tavily_searched_at")
             except yaml.YAMLError as e:
                 print(f"Error parsing YAML metadata: {e}")
 
@@ -77,7 +80,7 @@ class FileHandler:
         info_keyword: list = None,
         info_query: list = None,
         wiki_searched_at: str = None,
-        tavily_searched_at: str = None
+        tavily_searched_at: str = None,
     ) -> bool:
         """Update the YAML front matter of a note with freshness metadata.
 
@@ -93,11 +96,11 @@ class FileHandler:
         """
         try:
             resolved_path = FileHandler._resolve_path(note_path)
-            with open(resolved_path, 'r', encoding='utf-8') as f:
+            with open(resolved_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Check if YAML front matter exists
-            yaml_match = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+            yaml_match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
 
             if yaml_match:
                 # Parse existing YAML
@@ -108,34 +111,38 @@ class FileHandler:
 
                 # Update metadata
                 if info_keyword is not None:
-                    yaml_content['info_keyword'] = info_keyword
+                    yaml_content["info_keyword"] = info_keyword
                 if info_query is not None:
-                    yaml_content['info_query'] = info_query
+                    yaml_content["info_query"] = info_query
                 if wiki_searched_at is not None:
-                    yaml_content['wiki_searched_at'] = wiki_searched_at
+                    yaml_content["wiki_searched_at"] = wiki_searched_at
                 if tavily_searched_at is not None:
-                    yaml_content['tavily_searched_at'] = tavily_searched_at
+                    yaml_content["tavily_searched_at"] = tavily_searched_at
 
                 # Reconstruct content with updated YAML
-                new_yaml = yaml.dump(yaml_content, allow_unicode=True, default_flow_style=False)
+                new_yaml = yaml.dump(
+                    yaml_content, allow_unicode=True, default_flow_style=False
+                )
                 new_content = f"---\n{new_yaml}---{content[yaml_match.end():]}"
             else:
                 # Create new YAML front matter
                 yaml_content = {}
                 if info_keyword is not None:
-                    yaml_content['info_keyword'] = info_keyword
+                    yaml_content["info_keyword"] = info_keyword
                 if info_query is not None:
-                    yaml_content['info_query'] = info_query
+                    yaml_content["info_query"] = info_query
                 if wiki_searched_at is not None:
-                    yaml_content['wiki_searched_at'] = wiki_searched_at
+                    yaml_content["wiki_searched_at"] = wiki_searched_at
                 if tavily_searched_at is not None:
-                    yaml_content['tavily_searched_at'] = tavily_searched_at
+                    yaml_content["tavily_searched_at"] = tavily_searched_at
 
-                new_yaml = yaml.dump(yaml_content, allow_unicode=True, default_flow_style=False)
+                new_yaml = yaml.dump(
+                    yaml_content, allow_unicode=True, default_flow_style=False
+                )
                 new_content = f"---\n{new_yaml}---\n\n{content}"
 
             # Write back to file
-            with open(resolved_path, 'w', encoding='utf-8') as f:
+            with open(resolved_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
             return True
         except Exception as e:
@@ -144,9 +151,7 @@ class FileHandler:
 
     @staticmethod
     def save_search_result(
-        save_folder: Union[str, Path],
-        filename: str,
-        content: str
+        save_folder: Union[str, Path], filename: str, content: str
     ) -> bool:
         """Save search result to a markdown file.
 
@@ -163,7 +168,7 @@ class FileHandler:
             resolved_folder.mkdir(parents=True, exist_ok=True)
 
             file_path = resolved_folder / f"{filename}.md"
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         except Exception as e:
@@ -172,9 +177,7 @@ class FileHandler:
 
     @staticmethod
     def insert_freshness_guide(
-        note_path: Union[str, Path],
-        guide_summary: str,
-        full_guide_path: str
+        note_path: Union[str, Path], guide_summary: str, full_guide_path: str
     ) -> bool:
         """Insert freshness guide summary at the top of the note (after YAML).
 
@@ -188,11 +191,11 @@ class FileHandler:
         """
         try:
             resolved_path = FileHandler._resolve_path(note_path)
-            with open(resolved_path, 'r', encoding='utf-8') as f:
+            with open(resolved_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Find end of YAML front matter
-            yaml_match = re.match(r'^---\s*\n.*?\n---\s*\n?', content, re.DOTALL)
+            yaml_match = re.match(r"^---\s*\n.*?\n---\s*\n?", content, re.DOTALL)
 
             # Create the guide block
             guide_block = f"""
@@ -211,7 +214,7 @@ class FileHandler:
                 # Insert at the beginning
                 new_content = guide_block + content
 
-            with open(resolved_path, 'w', encoding='utf-8') as f:
+            with open(resolved_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
             return True
         except Exception as e:
