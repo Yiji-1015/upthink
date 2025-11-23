@@ -16,7 +16,7 @@ def render_file_input_section():
 
     save_folder = st.text_input(
         "저장 폴더 경로 (선택사항)",
-        placeholder="미입력시 '{노트 경로}/{노트 이름}/'에 저장됩니다",
+        placeholder="미입력시 위에서 입력한 노트가 있는 경로에 저장됩니다",
         help="검색 결과와 가이드를 저장할 폴더",
     )
 
