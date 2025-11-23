@@ -19,6 +19,7 @@ from backend.note_freshness.core.file_handler import FileHandler
 from backend.note_freshness.core.path_utils import resolve_path, format_path_for_display
 from backend.note_freshness.llm.client import UpstageClient
 from backend.note_freshness.llm.parsers import ResponseParser
+from backend.note_freshness.llm.prompt_loader import PromptLoader
 from backend.note_freshness.api.wikipedia import WikipediaClient
 from backend.note_freshness.api.tavily import TavilyClient
 from backend.note_freshness.ui.components import (
@@ -33,26 +34,9 @@ from backend.note_freshness.ui.components import (
 )
 
 
-# Default extraction schema template
-DEFAULT_EXTRACTION_SCHEMA = """{
-  "type": "object",
-  "properties": {
-    "info_keyword": {
-      "type": "string",
-      "description": "The most important keyword derived from the document. The keyword must be something that exists as a Wikipedia article."
-    },
-    "info_query": {
-      "type": "string",
-      "description": "A Korean search query that should be used with an Internet search API to retrieve the 'most up-to-date' information related to this document. Do not use Year or Month"
-    }
-  },
-  "required": ["info_keyword", "info_query"]
-}"""
-
-
 def ensure_pandoc_installed() -> bool:
     """Ensure pandoc is installed, download if necessary.
-    
+
     Returns:
         bool: True if pandoc is available, False otherwise.
     """
@@ -87,6 +71,29 @@ def validate_api_key() -> bool:
         st.error("⚠️ Upstage API key not found. Please set UPSTAGE_API_KEY in your .env file.")
         return False
     return True
+
+
+def get_default_schema() -> str:
+    """Load default extraction schema from file."""
+    loader = PromptLoader(prompts_dir=PROMPTS_DIR)
+    schema = loader.load_schema('info_extract_schema')
+    if schema:
+        return schema
+    # Fallback default
+    return """{
+  "type": "object",
+  "properties": {
+    "info_keyword": {
+      "type": "string",
+      "description": "The most important keyword derived from the document."
+    },
+    "info_query": {
+      "type": "string",
+      "description": "A Korean search query for retrieving up-to-date information."
+    }
+  },
+  "required": ["info_keyword", "info_query"]
+}"""
 
 
 def handle_note_validation(note_path: str, save_folder: str):
@@ -292,30 +299,30 @@ def handle_guide_generation():
     full_guide = "# 최신성 검토 가이드\n\n"
 
     client = UpstageClient()
+    loader = PromptLoader(prompts_dir=PROMPTS_DIR)
 
     # Generate guide from Wikipedia results
     if wiki_results:
         with st.spinner("Wikipedia 기반 가이드 생성 중..."):
             full_guide += "## Wikipedia 기반 검토\n\n"
+
+            # Load wiki template
+            wiki_template = loader.load_template('ck_recentness_wiki')
+
             for result in wiki_results:
-                # Load prompt template
-                system_prompt = """당신은 문서의 최신성을 검토하는 전문가입니다.
-주어진 노트 내용과 Wikipedia 정보를 비교하여 노트의 정보가 최신인지 확인하고,
-업데이트가 필요한 부분에 대한 구체적인 가이드라인을 제공합니다."""
+                if wiki_template:
+                    user_vars = {
+                        'keyword': result['keyword'],
+                        'wiki_title': result['title'],
+                        'wiki_summary': result['summary'],
+                        'note_content': note_content[:3000]
+                    }
+                    user_prompt = wiki_template.format_user_prompt(**user_vars)
+                    guide = client.generate_freshness_guide(wiki_template.system_prompt, user_prompt)
+                else:
+                    # Fallback if template not found
+                    guide = None
 
-                user_prompt = f"""## 검토할 키워드
-{result['keyword']}
-
-## Wikipedia 정보
-**제목:** {result['title']}
-**요약:** {result['summary']}
-
-## 원본 노트 내용
-{note_content[:3000]}...
-
-위 정보를 바탕으로 원본 노트의 최신성을 검토하고, 업데이트가 필요한 부분에 대한 가이드라인을 작성해주세요."""
-
-                guide = client.generate_freshness_guide(system_prompt, user_prompt)
                 if guide:
                     full_guide += f"### {result['keyword']}\n\n{guide}\n\n---\n\n"
 
@@ -323,27 +330,26 @@ def handle_guide_generation():
     if tavily_results:
         with st.spinner("Tavily 기반 가이드 생성 중..."):
             full_guide += "## 웹 검색 기반 검토\n\n"
+
+            # Load tavily template
+            tavily_template = loader.load_template('ck_recentness_tavily')
+
             for result in tavily_results:
                 search_results_text = ""
                 for item in result['results']:
                     search_results_text += f"### {item['title']}\n{item['content']}\n\n"
 
-                system_prompt = """당신은 문서의 최신성을 검토하는 전문가입니다.
-주어진 노트 내용과 웹 검색 결과를 비교하여 노트의 정보가 최신인지 확인하고,
-업데이트가 필요한 부분에 대한 구체적인 가이드라인을 제공합니다."""
+                if tavily_template:
+                    user_vars = {
+                        'query': result['query'],
+                        'search_results': search_results_text,
+                        'note_content': note_content[:3000]
+                    }
+                    user_prompt = tavily_template.format_user_prompt(**user_vars)
+                    guide = client.generate_freshness_guide(tavily_template.system_prompt, user_prompt)
+                else:
+                    guide = None
 
-                user_prompt = f"""## 검색 쿼리
-{result['query']}
-
-## 웹 검색 결과
-{search_results_text}
-
-## 원본 노트 내용
-{note_content[:3000]}...
-
-위 정보를 바탕으로 원본 노트의 최신성을 검토하고, 업데이트가 필요한 부분에 대한 가이드라인을 작성해주세요."""
-
-                guide = client.generate_freshness_guide(system_prompt, user_prompt)
                 if guide:
                     full_guide += f"### {result['query']}\n\n{guide}\n\n---\n\n"
 
@@ -352,16 +358,14 @@ def handle_guide_generation():
 
     # Generate summary
     with st.spinner("요약 생성 중..."):
-        summary_prompt = f"""다음 최신성 검토 가이드를 2-3문장으로 요약해주세요:
+        summary_template = loader.load_template('ck_recentness_summary')
 
-{full_guide[:2000]}
-
-가장 중요한 업데이트 필요 사항만 간결하게 언급해주세요."""
-
-        summary = client.generate_freshness_guide(
-            "당신은 문서 요약 전문가입니다.",
-            summary_prompt
-        )
+        if summary_template:
+            user_vars = {'full_guide': full_guide[:2000]}
+            summary_prompt = summary_template.format_user_prompt(**user_vars)
+            summary = client.generate_freshness_guide(summary_template.system_prompt, summary_prompt)
+        else:
+            summary = None
 
         if summary:
             # Get relative path for backlink
@@ -421,7 +425,8 @@ def main():
     # Step 2: Template Selection & Extraction
     elif current_step == StateManager.STEP_NOTE_VALIDATED:
         st.markdown("---")
-        schema_content = render_template_selection_section(DEFAULT_EXTRACTION_SCHEMA)
+        default_schema = get_default_schema()
+        schema_content = render_template_selection_section(default_schema)
 
         if st.button("템플릿 선택 완료", type="primary"):
             handle_extraction(schema_content)
