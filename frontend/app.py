@@ -50,12 +50,12 @@ home = st.Page(
 image_ocr = st.Page(
     "image_ocr.py",
     title="이미지 대체 텍스트 생성",
-    icon=":material/upload_file:",
+    icon=":material/image_search:",
 )
 tag_suggest = st.Page(
     "tag_suggest.py",
     title="태그 추천",
-    icon=":material/tag:",
+    icon=":material/new_label:",
 )
 related_note = st.Page(
     "related_note.py",
@@ -69,7 +69,7 @@ note_split = st.Page(
 )
 note_freshness = st.Page(
     "note_freshness.py",
-    title="최신성 검토",
+    title="최신 정보 확인",
     icon=":material/update:",
 )
 
@@ -81,8 +81,8 @@ pg = st.navigation(
             tag_suggest,
             related_note,
             note_split,
-            note_freshness,
         ],
+        "최신성 검증": [note_freshness],
     }
 )
 pg.run()
