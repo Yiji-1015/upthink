@@ -54,6 +54,7 @@ def render_recommendation_section(engine):
         target_note = st.text_input(
             "추천을 받을 노트 경로를 입력 후 Enter를 눌러주세요.",
             key="target_note_input",
+            value=st.session_state.get("last_target_note", ""),
         )
 
         if target_note:
@@ -66,36 +67,37 @@ def render_recommendation_section(engine):
                     related = engine.append_related_links(target_note, k=3)
                     st.session_state.related_results = related
                     st.session_state.last_target_note = target_note
-            else:
-                related = st.session_state.related_results
 
-            if related:
-                st.subheader("🔗 추천 노트 3개")
-                for r in related:
-                    st.markdown(r)
+        # 추천 결과가 있으면 표시 (입력 여부와 무관)
+        if "related_results" in st.session_state and st.session_state.related_results:
+            related = st.session_state.related_results
 
-                # 새로고침 버튼
-                st.text("")
-                *_, reset_btn = st.columns([5, 1])
-                with reset_btn:
-                    if st.button(
-                        "🔄ㅤ새로고침",
-                        use_container_width=True,
-                        help="처음 단계로 돌아갑니다",
-                    ):
-                        # 연관 노트 페이지 관련 키 초기화
-                        st.session_state.show_input = False
-                        keys_to_delete = [
-                            "target_note_input",
-                            "related_results",
-                            "last_target_note",
-                        ]
-                        for key in keys_to_delete:
-                            if key in st.session_state:
-                                del st.session_state[key]
-                        st.rerun()
-            else:
-                st.info("연관된 노트를 찾지 못했습니다.")
+            st.subheader("🔗 추천 노트 3개")
+            for r in related:
+                st.markdown(r)
+
+            # 새로고침 버튼
+            st.text("")
+            *_, reset_btn = st.columns([5, 1])
+            with reset_btn:
+                if st.button(
+                    "🔄ㅤ새로고침",
+                    use_container_width=True,
+                    help="처음 단계로 돌아갑니다",
+                ):
+                    # 연관 노트 페이지 관련 키 초기화
+                    st.session_state.show_input = False
+                    keys_to_delete = [
+                        "target_note_input",
+                        "related_results",
+                        "last_target_note",
+                    ]
+                    for key in keys_to_delete:
+                        if key in st.session_state:
+                            del st.session_state[key]
+                    st.rerun()
+        elif target_note:
+            st.info("연관된 노트를 찾지 못했습니다.")
 
 
 def main():
