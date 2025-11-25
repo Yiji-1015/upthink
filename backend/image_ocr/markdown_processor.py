@@ -112,7 +112,7 @@ class MarkdownImageProcessor:
             original_string = match.group(0)
 
             # Obsidian 위키링크 형식 유지 + 아래에 코드 블록으로 대체 텍스트 추가
-            replacement_string = f"{original_string}\n```\n(대체 텍스트 with Upstage)\n{new_alt_text}\n```\n"
+            replacement_string = f"{original_string}\n```\n(대체 텍스트 by Upstage)\n{new_alt_text}\n```\n"
 
             start = match.start() + offset
             end = match.end() + offset
@@ -149,11 +149,11 @@ class MarkdownImageProcessor:
         for match in self.OBSIDIAN_IMAGE_PATTERN.finditer(md_content):
             filename = match.group("filename").strip()
 
-            # 다음 줄에 코드 블록 "```\n(대체 텍스트 with Upstage)"가 있으면 이미 처리된 것으로 간주
+            # 다음 줄에 코드 블록 "```\n(대체 텍스트 by Upstage)"가 있으면 이미 처리된 것으로 간주
             match_end = match.end()
             remaining_content = md_content[match_end:]
 
-            if remaining_content.startswith("\n```\n(대체 텍스트 with Upstage)"):
+            if remaining_content.startswith("\n```\n(대체 텍스트 by Upstage)"):
                 print(f"[INFO] '{filename}'은 이미 대체 텍스트가 있습니다. 건너뜁니다.")
                 continue
 
