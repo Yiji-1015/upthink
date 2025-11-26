@@ -33,8 +33,22 @@ pip install uv
 # git clone
 git clone https://github.com/geminii01/upthink.git && cd upthink
 
+# develop 브랜치로 전환
+git checkout develop
+
+# 환경 변수 설정 (필수!)
+cp .env.example .env
+# .env 파일을 열어서 API 키 입력
+# UPSTAGE_API_KEY=your_actual_api_key_here
+# TAVILY_API_KEY=your_actual_api_key_here
+
 # Python 3.13과 의존성 자동 설치
 uv sync
+```
+
+### 3. 실행
+```bash
+streamlit run frontend/app.py
 ```
 
 추가할 dependency가 있는 경우: `uv add {XXX}`
