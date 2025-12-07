@@ -28,7 +28,7 @@ class TagComparator:
 
     def __init__(
         self,
-        similarity_threshold: float = 0.48,
+        similarity_threshold: float = 0.85,
         model_name: str = "Qwen/Qwen3-Embedding-0.6B",
     ):
         """
@@ -43,13 +43,12 @@ class TagComparator:
         self.similarity_threshold = similarity_threshold
         self.tag_extractor = TagExtractor()
 
-    def _get_embeddings(self, texts: List[str], is_query: bool = False) -> np.ndarray:
+    def _get_embeddings(self, texts: List[str]) -> np.ndarray:
         """
         텍스트 리스트를 embedding 벡터로 변환
 
         Args:
             texts: 변환할 텍스트 리스트
-            is_query: True면 query로 인코딩 (신규 태그), False면 document로 인코딩 (기존 태그)
 
         Returns:
             embedding 벡터 배열 (shape: [len(texts), embedding_dim])
@@ -70,13 +69,8 @@ class TagComparator:
         if not valid_texts:
             raise ValueError("유효한 텍스트가 없습니다")
 
-        # SentenceTransformer로 embedding 생성
-        if is_query:
-            # 신규 태그는 query로 인코딩
-            embeddings = self.model.encode(valid_texts, prompt_name="query")
-        else:
-            # 기존 태그는 document로 인코딩
-            embeddings = self.model.encode(valid_texts)
+        # SentenceTransformer로 embedding 생성 (기존 태그/신규 태그 모두 document로 처리)
+        embeddings = self.model.encode(valid_texts)
 
         return embeddings
 
@@ -128,11 +122,9 @@ class TagComparator:
             ]
 
         try:
-            # Embedding 생성 (신규 태그는 query, 기존 태그는 document)
-            new_tag_embeddings = self._get_embeddings(valid_new_tags, is_query=True)
-            existing_tag_embeddings = self._get_embeddings(
-                valid_existing_tags, is_query=False
-            )
+            # Embedding 생성 (신규 태그와 기존 태그 모두 같은 공간에서 처리)
+            new_tag_embeddings = self._get_embeddings(valid_new_tags)
+            existing_tag_embeddings = self._get_embeddings(valid_existing_tags)
 
             # 모든 신규 태그와 기존 태그 간의 유사도를 한번에 계산
             all_similarities = self.model.similarity(
