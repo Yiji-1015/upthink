@@ -20,7 +20,7 @@ UpThink는 Upstage Solar Pro 2의 강력한 언어 이해 능력을 기반으로
 
 ## Architecture
 
-<img width="1395" alt="Image" src="https://github.com/user-attachments/assets/dd90a534-b66b-472d-95a2-5ad8472b6f1b" />
+<img width="1395" alt="Image" src="https://github.com/user-attachments/assets/75be6352-930d-4bfb-ae4c-6d9fe15e7d05" />
 
 ## Features
 
